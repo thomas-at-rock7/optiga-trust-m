@@ -61,8 +61,6 @@ pal_i2c_t optiga_pal_i2c_context_0 =
     NULL
 };
 
-static struct pal_linux_gpio pin_reset = {GPIO_PIN_RESET, -1};
-static struct pal_linux_gpio pin_vdd = {GPIO_PIN_VDD, -1};
 
 /**
 * \brief PAL vdd pin configuration for OPTIGA. 
@@ -70,7 +68,7 @@ static struct pal_linux_gpio pin_vdd = {GPIO_PIN_VDD, -1};
 pal_gpio_t optiga_vdd_0 =
 {
     // Platform specific GPIO context for the pin used to toggle Vdd.
-    (void*)&pin_vdd
+    (void*)NULL
 };
 
 /**
@@ -79,7 +77,7 @@ pal_gpio_t optiga_vdd_0 =
 pal_gpio_t optiga_reset_0 =
 {
     // Platform specific GPIO context for the pin used to toggle Reset.
-    (void*)&pin_reset
+    (void*)NULL
 };
 
 /**
