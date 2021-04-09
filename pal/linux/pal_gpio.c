@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <linux/limits.h>
 #include "errno.h"
 
 #include "optiga/pal/pal_gpio.h"
@@ -67,9 +68,17 @@ GPIOExport(int pin)
     }
 
     bytes_written = snprintf(buffer, BUFFER_MAX, "%d", pin);
-    write(fd, buffer, bytes_written);
-    close(fd);
-    usleep(100000);
+    if (write(fd, buffer, bytes_written) < 0)
+    {
+        fprintf(stderr, "Failed to write buffer to export GPIO!\n");
+        close(fd);
+        return(-1);
+    }
+    else
+    {
+        close(fd);
+        usleep(100000);
+    }
     return(0);
 }
 
@@ -87,9 +96,17 @@ GPIOUnexport(int pin)
     }
 
     bytes_written = snprintf(buffer, BUFFER_MAX, "%d", pin);
-    write(fd, buffer, bytes_written);
-    close(fd);
-    usleep(100000);
+    if (write(fd, buffer, bytes_written) < 0)
+    {
+        fprintf(stderr, "Failed to write buffer to unexport GPIO!\n");
+        close(fd);
+        return(-1);
+    }
+    else
+    {
+        close(fd);
+        usleep(100000);
+    }
     return(0);
 }
 
@@ -98,11 +115,10 @@ GPIODirection(int pin, int dir)
 {
     static const char s_directions_str[]  = "in\0out";
 
-#define DIRECTION_MAX 34
-    char path[DIRECTION_MAX];
+    char path[PATH_MAX];
     int fd;
 
-    snprintf(path, DIRECTION_MAX, "/sys/class/gpio/gpio%d/direction", pin);
+    snprintf(path, PATH_MAX, "/sys/class/gpio/gpio%d/direction", pin);
     fd = open(path, O_WRONLY);
     if (-1 == fd) {
         fprintf(stderr, "Failed to open gpio direction for writing!\n");
@@ -128,7 +144,8 @@ GPIOWrite(pal_linux_gpio_t* pin, int value)
 		int errsv = errno;
 		char err_msg[100];
 		sprintf(err_msg, "Failed to write value! Erro code = %d, fd = %d\n", errsv, pin->fd);
-        write(STDERR_FILENO, err_msg, strlen(err_msg));
+        int result = write(STDERR_FILENO, err_msg, strlen(err_msg));
+        (void)result;
         return(-1);
     }
     return(0);
@@ -139,8 +156,7 @@ GPIOWrite(pal_linux_gpio_t* pin, int value)
 //lint --e{714,715} suppress "This function is used for to support multiple platforms "
 pal_status_t pal_gpio_init(const pal_gpio_t * p_gpio_context)
 {
-#define VALUE_MAX 30
-    char path[VALUE_MAX] = {0};
+    char path[PATH_MAX] = {0};
 
     if (p_gpio_context->p_gpio_hw != NULL)
     {
@@ -159,7 +175,7 @@ pal_status_t pal_gpio_init(const pal_gpio_t * p_gpio_context)
         if (-1 == GPIODirection(res_pin, OUT))
             return(2);
 
-        snprintf(path, VALUE_MAX, GPIO_VALUE_FMT_STR, res_pin);
+        snprintf(path, PATH_MAX, GPIO_VALUE_FMT_STR, res_pin);
         int fd = open(path, O_WRONLY);
         if (fd < 0) {
             fprintf(stderr, "Failed to open gpio value for writing!\n");
